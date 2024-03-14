@@ -1,0 +1,1 @@
+I added this folder to dedicate a space to your intermediate results, or any other things you would like to share. Personally, I sometimes write summaries on Overleaf when I finish a subtopic. If you want to, use can use this space to keep any intermediate results, be it plots, text, or small data sets.
