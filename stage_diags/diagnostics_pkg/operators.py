@@ -148,12 +148,20 @@ def calc_lap(psi, delta, bc_fac):
        
     N = np.shape(psi)[-1]
     Nt = np.shape(psi)[0]
-    
+    print("Nt=",Nt,"N=",N)
     lap = np.zeros([Nt,N,N])
-    
+    print("lap de ope shape :",lap.shape)
+    print("psi de op shape",psi.shape)
+    print("1",psi[:,2:, 1:-1].shape)
+    print("2",psi[:,1:-1, 2:].shape)
+    print("3",psi[:,:-2, 1:-1].shape)
+    print("4",psi[:,1:-1, :-2].shape)
+    print("5",psi[:,1:-1, 1:-1].shape)
+    print("-1", lap[:,1:-1,1:-1].shape)
+    print(delta.shape)
     # interior
     lap[:,1:-1,1:-1] = (psi[:,2:, 1:-1] + psi[:,1:-1, 2:] + psi[:,:-2, 1:-1] + psi[:,1:-1, :-2] - 4*psi[:,1:-1, 1:-1])/delta**2
-    
+    #lap[:,:,:] = (psi[:,2:, 1:-1] + psi[:,1:-1, 2:] + psi[:,:-2, 1:-1] + psi[:,1:-1, :-2] - 4*psi[:,1:-1, 1:-1])/delta**2
     if bc_fac == 1:
         # no-slip boundaries
         lap[:,0,:] = 2*psi[:,1,:]/delta**2
