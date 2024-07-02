@@ -39,7 +39,7 @@ def integrate(field, delta, bc_fac = 0):
     return integral
 
 
-def J(psi, q, delta):
+def J(psi, q, delta, bc_fac = 0):
     ''' computes Jacobian between psi and q in the interior using the Arakawa
     method. '''
     
@@ -52,7 +52,10 @@ def J(psi, q, delta):
     if len(np.shape(q))==2:
         q = q[None, :, :]
         cq = 1
-    
+
+    if bc_fac == -1:
+        psi = expand_periodic(psi)
+        q = expand_periodic(q)
     
     # compute Arakawa jacobian in the interior
     J = (psi[:,2:,1:-1] - psi[:,:-2,1:-1])*(q[:,1:-1,2:] - q[:,1:-1,:-2]) - (psi[:,1:-1,2:] - psi[:,1:-1,:-2])*(q[:,2:,1:-1] - q[:,:-2,1:-1]) # J++
@@ -60,7 +63,10 @@ def J(psi, q, delta):
     J += -q[:,2:,1:-1]*(psi[:,2:,2:] -psi[:,2:,:-2]) + q[:,:-2,1:-1]*(psi[:,:-2,2:] - psi[:,:-2, :-2]) + q[:,1:-1,2:]*(psi[:,2:,2:] - psi[:,:-2, 2:]) - q[:,1:-1,:-2]*(psi[:,2:,:-2] - psi[:,:-2, :-2]) #Jx+
             
     J /= -12*delta**2 # added the minus for the y/x change when working with x-arrays.
-    
+
+    if bc_fac == -1:
+        J[:,1:-1,1:-1]
+        
     if cpsi == 1 and cq == 1:
         J = J[0,:,:]
     
