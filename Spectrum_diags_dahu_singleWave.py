@@ -264,11 +264,16 @@ time_idx=np.arange(0,8,1)
 ffts = [fft2d_RI(psi, Lx, nx, ny, time_sel=i)[0] for i in time_idx]
 Kx,Ky = fft2d_RI(psi, Lx, nx, ny, time_sel=0)[1:3]
 
-
+#Loading the modes
+#/home/massoale/Bureau/Stage_M2/figures/Wave_signmodes_jet/dahu_6201.0.npy
 #Select the modes 
-k0,l0=0.0125,-0.3875
+mode_file=np.load(/home/massoale/Bureau/Stage_M2/figures/Wave_sign/modes_jetdahu_6201.0.npy  )
+non_linear_energies_singl = np.zeros((len(time_idx), len(Kx[0,:]), len(Ky[:,0]))
+for i in range(0,mode_file.shape[0]):
 
-non_linear_energies_singl = parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, Lx)
+    k0=mode_file[i,0]
+    l0=mode_file[i,1]
+    non_linear_energies_singl = parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, Lx)
 
 np.save('non_linear_energy_matrix/non_lin_term_list'+str(k0)+'_'+str(l0)+'.npy', non_linear_energies_singl)
 
