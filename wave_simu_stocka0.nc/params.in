@@ -1,0 +1,29 @@
+#!sh
+# input parameter file
+# double gyre 
+NX  = 100
+NY  = 100
+nl = 1
+Lx = 4000000.0
+f0 = 2
+beta = 2e-11
+
+# stochastic forcing. k_f is the forcing length scale
+
+
+# bc_fac = 0: free slip, 1: no slip, [0..1]: partial slip, -1: periodic BC
+bc_fac = -1
+
+# dh must be an array
+dh = [1]
+N2 = [0]
+
+# dissipation parameters
+nu = 0
+nu_hyper = 0
+n_hyper = 4
+hEkb = 0
+
+# timestepping
+tend  =  1576800000000
+dt_out = 500
