@@ -84,7 +84,7 @@ def fft2d_RI(psi, Lx, nx, ny,time_sel=1):
     ky_shifted = np.fft.fftshift(ky)
     
     Kx, Ky = np.meshgrid(kx_shifted, ky_shifted)
-    #Ky = np.flipud(Ky)
+    
 
     
     psi_data = psi[time_sel, :, :]
@@ -219,14 +219,15 @@ def non_linear_energy_vect(fft,Kx,Ky,k0,l0,L=Lx):
             n_diff=int(np.round(L*(l0-l)/(2*np.pi)))+len(Ky[:,0])//2
             m_plus=int(np.round(L*(k+k0)/(2*np.pi)))+len(Kx[0,:])//2
             n_plus=int(np.round(L*(l+l0)/(2*np.pi)))+len(Ky[:,0])//2
+
             if m_diff<0 or n_diff<0 or m_diff>=len(Kx[0,:]) or n_diff>=len(Ky[:,0]):
-                NL_energy[j,i]=0
+                NL_energy[i,j]  += 0
                 continue
 
             if  m_plus<0 or n_plus<0 or m_plus>=len(Kx[0,:]) or n_plus>=len(Ky[:,0]):
-                NL_energy[j,i]=0
+                NL_energy[i,j] +=0
                 continue
-            NL_energy[j,i] = 1/4*(k*l0-l*k0) * (\
+            NL_energy[i,j] = 1/4*(k*l0-l*k0) * (\
                             ((k-k0)**2+(l-l0)**2)*( fft[n,m]*fft[n_diff,m_diff]*np.conj(fft0)\
                                                                + np.conj(fft[n,m])*np.conj(fft[n_diff,m_diff])*fft0 )\
                             -  ((k0+k)**2+(l0+l)**2)*( np.conj(fft[n,m])*fft[n_plus,m_plus]*np.conj(fft0)\
@@ -236,8 +237,62 @@ def non_linear_energy_vect(fft,Kx,Ky,k0,l0,L=Lx):
 
     return NL_energy
 
+#Computing non linear energy, with vectorisation
 
+def non_linear_energy_vect_old_version(fft,Kx,Ky,L=Lx):
+    """
+    fft: 2D array of the fft of psi
+    Kx,Ky: 2D arrays of the wavenumbers
+
+    return the non linear energy term in the Fourier space
+    """
+
+    NL_energy=np.zeros_like(fft)
+
+    for i,l in enumerate(Ky[:,0]):
+        for j,k in enumerate(Kx[0,:]):
+            #Finding the indices of k,l
+            m=int(np.round(L*k/(2*np.pi)))+len(Kx[0,:])//2
+            n=int(np.round(L*l/(2*np.pi)))+len(Ky[:,0])//2
+
+
+            NL_energy += 1/4*(k*Ky-l*Kx) * (\
+                            ((k-Kx)**2+(l-Ky)**2)*( fft[n,m]*fft_kpluk0(fft,k,l,False,L)*np.conj(fft)\
+                                                               + np.conj(fft[n,m])*np.conj(fft_kpluk0(fft,k,l,False,L))*fft )\
+                            -  ((Kx+k)**2+(Ky+l)**2)*( np.conj(fft[n,m])*fft_kpluk0(fft,k,l,True,L)*np.conj(fft)\
+                                                            + fft[n,m]*np.conj(fft_kpluk0(fft,k,l,True,L))*fft )\
+                            )
+        print(f"Processing row {i+1}/{len(Ky[:, 0])}")
+
+    return NL_energy
  
+#Computing non linear energy, with vectorisation
+
+def non_linear_energy_vect_k_mat(fft,Kx,Ky,k0,l0,L=Lx):
+    """
+    fft: 2D array of the fft of psi
+    Kx,Ky: 2D arrays of the wavenumbers
+
+    return the non linear energy term in the Fourier space
+    """
+
+    NL_energy=np.zeros_like(fft)
+
+    
+    
+    m0=int(np.round(L*k0/(2*np.pi)))+len(Kx[0,:])//2
+    n0=int(np.round(L*l0/(2*np.pi)))+len(Ky[:,0])//2    
+    fft0=fft[n0,m0]
+
+    NL_energy += 1/4*(Kx*l0-Ky*k0) * (\
+                    ((Kx-k0)**2+(Ky-l0)**2)*( fft*np.conj(fft_kpluk0(fft,k0,l0,False,L))*np.conj(fft0)\
+                                                        + np.conj(fft)*fft_kpluk0(fft,k0,l0,False,L)*fft0 )\
+                    -  ((k0+Kx)**2+(l0+Ky)**2)*( np.conj(fft)*fft_kpluk0(fft,k0,l0,True,L)*np.conj(fft0)\
+                                                    + fft*np.conj(fft_kpluk0(fft,k0,l0,True,L))*fft0 )\
+                    )
+
+    return NL_energy
+
 
 from joblib import Parallel, delayed
 
@@ -255,24 +310,47 @@ def parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, L=Lx, n_jobs=-1):
     results = Parallel(n_jobs=n_jobs)(
         delayed(non_linear_energy_vect)(fft, Kx, Ky,k0,l0, L) for fft in ffts
     )
+
+    # with tqdm(total=len(ffts)) as pbar:
+    #     results = Parallel(n_jobs=n_jobs)(
+    #         delayed(non_linear_energy_vect_k_mat)(fft, Kx, Ky, k0, l0, L) for fft in tqdm(ffts, desc="Processing snapshots")
+    #     )
+    #     pbar.update(len(ffts))
     return results
+    #return results
 
 
 nx = int(nx)
 ny = int(ny)
 time_idx=np.arange(0,8,1)
+
+#Array containing the ffts at different times :
 ffts = [fft2d_RI(psi, Lx, nx, ny, time_sel=i)[0] for i in time_idx]
+
 Kx,Ky = fft2d_RI(psi, Lx, nx, ny, time_sel=0)[1:3]
 
 #Loading the modes
 #/home/massoale/Bureau/Stage_M2/figures/Wave_signmodes_jet/dahu_6201.0.npy
-#Select the modes 
-mode_file=np.load('/home/massoale/Bureau/Stage_M2/figures/Wave_sign/modes_jetdahu_6201.0.npy')
-non_linear_energies_singl = np.zeros((len(time_idx), len(Kx[0,:]), len(Ky[:,0])))
-for i in range(0,mode_file.shape[0]):
 
-    k0=mode_file[i,0]
-    l0=mode_file[i,1]
-    non_linear_energies_singl = parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, Lx)
-np.save('non_linear_energy_matrix/non_lin_term_jet_list'+'.npy', non_linear_energies_singl)
+#Select the modes k0,l0 you want to compute the non-linear energy 
+mode_file=np.load('/home/massoale/Bureau/Stage_M2/figures/Wave_sign/modes_jetdahu_620.npy')
+k0=mode_file[1,0]
+l0=mode_file[1,1]   
+print("k0=",k0,"l0",l0)
+non_linear_energies_k0=parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, Lx)
+
+non_linear_energies_array = np.zeros((np.shape(mode_file)[0], len(Kx[0,:]), len(Ky[:,0])))
+non_linear_energies_single = np.zeros((len(time_idx), len(Kx[0,:]), len(Ky[:,0])))
+
+# for i in range(0,mode_file.shape[0]):
+#     k0=mode_file[i,0]
+#     l0=mode_file[i,1]
+#     print("k0=",k0,"l0",l0)
+#     non_linear_energies_single = parallel_non_linear_energy(ffts, Kx, Ky,k0,l0, Lx)
+#     non_linear_energies_array[i] = np.mean(non_linear_energies_single,axis=0)
+
+#     print(f"Non-linear energy for mode {i+1}/{mode_file.shape[0]}")
+
+#np.save('../non_linear_energy_matrix/non_lin_term_jet_list.npy', non_linear_energies_array)
+np.save('../non_linear_energy_matrix/non_lin_term_jet_'+str(l0)+'.npy', non_linear_energies_k0)
 
