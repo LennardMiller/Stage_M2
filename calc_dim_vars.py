@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-Oc = 0.01
-Zo = 6
+Oc = 0.1
+Zo = 8
 
 def dim_vars(Oc, Zo):
     """ calculates dimensional variables for a given Oc and Zo"""
