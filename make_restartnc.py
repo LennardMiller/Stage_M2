@@ -2,8 +2,9 @@ import netCDF4 as nc
 import numpy as np
 
 # Open the original netCDF file
-source_file = '/home/massoale/Simu_Test/simu_dahu/simu_dahu924/outdir_0001/vars.nc'
+source_file = '/home/massoale/Simu_Test/simu_dahu/simu_dahu619/outdir_0001/vars.nc'
 src = nc.Dataset(source_file, 'r')
+
 
 # Check the dimensions and variables
 print(src)

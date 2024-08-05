@@ -63,7 +63,7 @@ print(f"N = {N}")
 
 n_hyper = 4
 
-Oc_test = (eps/(beta**2*r*(L/(2*np.pi))**4))**(1/4) #k_Rh/k_L
+Oc_test = (eps/(beta**2*r*(L/(2*np.pi))**4))**(1/4)#k_Rh/k_L
 Zo_test = (beta**2*eps/r**5)**(1/20) #k_Rh/k_eps
 print("Oc test",Oc_test)
 print("Zo test",Zo_test)
